@@ -1,0 +1,84 @@
+[build-system]
+requires = ["scikit_build_core", "pybind11"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "hp2-slam"
+version = "0.0.1"
+description = "HP2-SLAM: Adaptive Hybrid ICP for Robust and Efficient LiDAR SLAM"
+readme = "README.md"
+authors = [
+    { name = "Nam Tran", email = "namlc321@gmail.com" },
+]
+requires-python = ">=3.8"
+keywords = [
+    "LiDAR",
+    "SLAM",
+    "Mapping",
+]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Other Audience",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: Unix",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "opencv-python",
+    "map_closures>=2.0.2",
+    "open3d>=0.19.0",
+    "numpy",
+    "PyYAML",
+    "pydantic>=2",
+    "tqdm",
+    "pydantic-settings",
+]
+
+[project.scripts]
+hp2_slam_pipeline="hp2_slam.tools.cli:run"
+hp2_slam_dump_config="hp2_slam.config.config:write_config"
+
+[project.urls]
+Homepage = "https://github.com/PRBonn/kiss-slam"
+
+[tool.scikit-build]
+build-dir = "build/{wheel_tag}"
+cmake.verbose = false
+cmake.minimum-version = "3.22"
+editable.mode = "redirect"
+editable.rebuild = true
+editable.verbose = true
+sdist.exclude = ["hp2_slam_pybind/"]
+wheel.install-dir = "hp2_slam/hp2_slam_pybind/"
+
+[tool.black]
+line-length = 100
+
+[tool.isort]
+profile = "black"
+
+[tool.pylint.format]
+max-line-length = "100"
+
+[tool.cibuildwheel]
+archs = ["auto64"]
+skip = ["*-musllinux*",  "pp*", "cp36-*"]
+
+[tool.cibuildwheel.config-settings]
+"cmake.define.USE_SYSTEM_EIGEN3" = "OFF"
+"cmake.define.USE_SYSTEM_G2O" = "OFF"
+"cmake.define.USE_SYSTEM_TSL-ROBIN-MAP" = "OFF"
+
+[tool.cibuildwheel.macos]
+environment = "MACOSX_DEPLOYMENT_TARGET=11.0"
+archs = ["auto64", "arm64"]

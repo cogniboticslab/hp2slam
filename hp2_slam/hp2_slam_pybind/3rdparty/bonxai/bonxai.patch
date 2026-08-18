@@ -1,0 +1,127 @@
+diff --git a/bonxai_core/include/bonxai/bonxai.hpp b/bonxai_core/include/bonxai/bonxai.hpp
+index 7d360cf..9f488c1 100644
+--- a/bonxai_core/include/bonxai/bonxai.hpp
++++ b/bonxai_core/include/bonxai/bonxai.hpp
+@@ -49,7 +49,7 @@ class Grid {
+ 
+  public:
+   Grid(size_t log2dim)
+-      : dim_(1 << log2dim),
++      : dim_(static_cast<uint8_t>(1 << log2dim)),
+         mask_(log2dim) {
+     if constexpr (!std::is_same_v<DataT, EmptyVoxel>) {
+       size_ = dim_ * dim_ * dim_;
+@@ -58,7 +58,7 @@ class Grid {
+   }
+ 
+   Grid(size_t log2dim, DataT* preAllocatedMemory)
+-      : dim_(1 << log2dim),
++      : dim_(static_cast<uint8_t>(1 << log2dim)),
+         data_(preAllocatedMemory),
+         mask_(log2dim),
+         external_memory_(true) {}
+@@ -367,7 +367,7 @@ inline size_t Grid<DataT>::memUsage() const {
+ template <typename DataT>
+ inline void VoxelGrid<DataT>::releaseUnusedMemory() {
+   std::vector<CoordT> keys_to_delete;
+-  for (const auto& [key, inner_grid] : root_map) {
++  for (auto& [key, inner_grid] : root_map) {
+     for (auto inner_it = inner_grid.mask().beginOn(); inner_it; ++inner_it) {
+       const int32_t inner_index = *inner_it;
+       auto& leaf_grid = inner_grid.cell(inner_index);
+@@ -404,9 +404,9 @@ inline VoxelGrid<DataT>::VoxelGrid(double voxel_size, uint8_t inner_bits, uint8_
+ template <typename DataT>
+ inline CoordT VoxelGrid<DataT>::posToCoord(double x, double y, double z) const {
+   return {
+-      static_cast<int32_t>(std::nearbyint(x * inv_resolution)),
+-      static_cast<int32_t>(std::nearbyint(y * inv_resolution)),
+-      static_cast<int32_t>(std::nearbyint(z * inv_resolution))};
++      static_cast<int32_t>(std::floor(x * inv_resolution)),
++      static_cast<int32_t>(std::floor(y * inv_resolution)),
++      static_cast<int32_t>(std::floor(z * inv_resolution))};
+ }
+ 
+ template <typename DataT>
+diff --git a/bonxai_core/include/bonxai/grid_allocator.hpp b/bonxai_core/include/bonxai/grid_allocator.hpp
+index 34a3231..fc40d61 100644
+--- a/bonxai_core/include/bonxai/grid_allocator.hpp
++++ b/bonxai_core/include/bonxai/grid_allocator.hpp
+@@ -10,6 +10,7 @@
+ #pragma once
+ 
+ #include <cassert>
++#include <cstddef>
+ #include <memory>
+ #include <mutex>
+ #include <stdexcept>
+@@ -87,7 +88,7 @@ class GridBlockAllocator {
+ template <typename DataT>
+ inline GridBlockAllocator<DataT>::GridBlockAllocator(size_t log2dim)
+     : log2dim_(log2dim),
+-      block_bytes_(std::pow((1 << log2dim), 3) * sizeof(DataT)),
++      block_bytes_(static_cast<size_t>(std::pow((1 << log2dim), 3) * sizeof(DataT))),
+       mutex_(new std::mutex) {}
+ 
+ template <typename DataT>
+@@ -111,7 +112,7 @@ GridBlockAllocator<DataT>::allocateBlock() {
+     auto mask_index = chunk->mask.findFirstOn();
+     if (mask_index < chunk->mask.size()) {
+       // found in this chunk
+-      uint32_t data_index = block_bytes_ * mask_index;
++      size_t data_index = block_bytes_ * mask_index;
+       DataT* ptr = reinterpret_cast<DataT*>(&chunk->data[data_index]);
+       chunk->mask.setOff(mask_index);
+       size_++;
+diff --git a/bonxai_core/include/bonxai/grid_coord.hpp b/bonxai_core/include/bonxai/grid_coord.hpp
+index da8fb7d..1f9727b 100644
+--- a/bonxai_core/include/bonxai/grid_coord.hpp
++++ b/bonxai_core/include/bonxai/grid_coord.hpp
+@@ -79,9 +79,9 @@ struct CoordT {
+ 
+ [[nodiscard]] inline CoordT PosToCoord(const Point3D& point, double inv_resolution) {
+   return {
+-      static_cast<int32_t>(std::nearbyint(point.x * inv_resolution)),
+-      static_cast<int32_t>(std::nearbyint(point.y * inv_resolution)),
+-      static_cast<int32_t>(std::nearbyint(point.z * inv_resolution))};
++      static_cast<int32_t>(std::floor(point.x * inv_resolution)),
++      static_cast<int32_t>(std::floor(point.y * inv_resolution)),
++      static_cast<int32_t>(std::floor(point.z * inv_resolution))};
+ }
+ 
+ [[nodiscard]] inline Point3D CoordToPos(const CoordT& coord, double resolution) {
+@@ -212,7 +212,7 @@ struct hash<Bonxai::CoordT> {
+   std::size_t operator()(const Bonxai::CoordT& p) const {
+     // same as OpenVDB
+     return ((1 << 20) - 1) & (static_cast<int64_t>(p.x) * 73856093 ^  //
+-                              static_cast<int64_t>(p.y) * 19349663 ^  //
++                              static_cast<int64_t>(p.y) * 19349669 ^  //
+                               static_cast<int64_t>(p.z) * 83492791);
+   }
+ };
+diff --git a/bonxai_core/include/bonxai/serialization.hpp b/bonxai_core/include/bonxai/serialization.hpp
+index b519073..2caaf2f 100644
+--- a/bonxai_core/include/bonxai/serialization.hpp
++++ b/bonxai_core/include/bonxai/serialization.hpp
+@@ -128,17 +128,17 @@ inline HeaderInfo GetHeaderInfo(std::string header) {
+   if (header.rfind(expected_prefix, 0) != 0) {
+     throw std::runtime_error("Header wasn't recognized");
+   }
+-  int p1 = header.find(",", 18) + 1;
++  long unsigned int p1 = header.find(",", 18) + 1;
+   auto part_type = header.substr(18, p1 - 18 - 1);
+ 
+-  int p2 = header.find(",", p1 + 1) + 1;
++  long unsigned int p2 = header.find(",", p1 + 1) + 1;
+   auto part_ibits = header.substr(p1, p2 - p1 - 1);
+ 
+-  int p3 = header.find(">", p2) + 1;
++  long unsigned int p3 = header.find(">", p2) + 1;
+   auto part_lbits = header.substr(p2, p3 - p2 - 1);
+ 
+-  int p4 = header.find("(", p3) + 1;
+-  int p5 = header.find(")", p4);
++  long unsigned int p4 = header.find("(", p3) + 1;
++  long unsigned int p5 = header.find(")", p4);
+   auto part_res = header.substr(p4, p5 - p4);
+ 
+   HeaderInfo info;
