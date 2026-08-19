@@ -64,6 +64,7 @@ You can generate a default `config.yaml` by typing:
 hp2slam_dump_config
 ```
 
+
 which will generate a `hp2slam.yaml` file. Now, you can modify the parameters and pass the file to the `--config` option when running the `hp2slam_pipeline`.
 
 Suggestion for indoor applications:
