@@ -1,18 +1,16 @@
 <div align="center">
     <h1>HP2-SLAM</h1>
 
-  <br />
-  <br />
-
-[HP2-SLAM](https://github.com/cogniboticslab/hp2) is an Adaptive Hybrid ICP for Robust and Efficient LiDAR SLAM.
-
-
-![motivation]()
-
+[HP2-SLAM](https://github.com/cogniboticslab/hp2slam) is an Adaptive Hybrid ICP for Robust and Efficient LiDAR SLAM.
 
 </div>
 
 <hr />
+
+<p align="center">
+  <img src="images/preprint26_hp2_slam.png" width="800"/>
+</p>
+
 
 
 ### Installation
@@ -21,8 +19,8 @@ For development purposes, we recommend creating a dedicated conda environment an
 
 ```bash
 # 1) Create and activate environment
-conda create -n hp2_slam python=3.9 -y
-conda activate hp2_slam
+conda create -n hp2slam python=3.9 -y
+conda activate hp2slam
 
 # 2) Install required system dependencies (Ubuntu/Debian)
 sudo apt update
@@ -33,8 +31,8 @@ python -m pip install --upgrade pip
 conda install -c conda-forge -y "cmake>=3.27" "ninja>=1.11"
 
 # 4) Clone the repository
-git clone https://github.com/cogniboticslab/hp2.git
-cd hp2
+git clone https://github.com/cogniboticslab/hp2slam.git
+cd hp2slam
 
 # 5) Build & install the hybrid-icp dependency (vendored into this repo)
 cd hybrid-icp/python
@@ -45,14 +43,14 @@ cd ../..
 pip install -e .
 
 # 7) (Optional) Verify installation
-python -c "import hybrid_icp; import hp2_slam; print('Installation successful!')"
+python -c "import hybrid_icp; import hp2slam; print('Installation successful!')"
 
 ```
 
 ## Running the system
 Next, follow the instructions on how to run the system by typing:
 ```
-hp2_slam_pipeline --help
+hp2slam_pipeline --help
 ```
 
 This should print the following help message:
@@ -63,10 +61,10 @@ This should print the following help message:
 You can generate a default `config.yaml` by typing:
 
 ```
-hp2_slam_dump_config
+hp2slam_dump_config
 ```
 
-which will generate a `hp2_slam.yaml` file. Now, you can modify the parameters and pass the file to the `--config` option when running the `hp2_slam_pipeline`.
+which will generate a `hp2slam.yaml` file. Now, you can modify the parameters and pass the file to the `--config` option when running the `hp2slam_pipeline`.
 
 Suggestion for indoor applications:
 1. Reduce the `odometry.preprocessing.max_range` to 50.0, this will automatically reduce the `voxel_size` to 0.5.
@@ -86,4 +84,4 @@ This project builds on top of [KISS-SLAM](https://github.com/PRBonn/kiss-slam/),
 
 ## Contact Us
 For questions or feedback:
-- GitHub Issues: https://github.com/cogniboticslab/hp2/issues
+- GitHub Issues: https://github.com/cogniboticslab/hp2slam/issues
