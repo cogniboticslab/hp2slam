@@ -1,1 +1,3 @@
-*.ipynb linguist-detectable=false
+*.ipynb linguist-vendored
+hybrid-icp/** linguist-vendored
+*.py linguist-detectable=true
