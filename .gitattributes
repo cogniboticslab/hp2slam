@@ -1,3 +1,2 @@
-*.ipynb linguist-vendored
+*.ipynb linguist-language=Python
 hybrid-icp/** linguist-vendored
-*.py linguist-detectable=true
